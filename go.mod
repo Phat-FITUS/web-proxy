@@ -10,4 +10,7 @@ replace github.com/Phat-FITUS/web-proxy/HTTP => ./HTTP
 
 require github.com/Phat-FITUS/web-proxy/Server v0.0.0-00010101000000-000000000000
 
-require github.com/Phat-FITUS/web-proxy/HTTP v0.0.0-00010101000000-000000000000 // indirect
+require (
+	github.com/Phat-FITUS/web-proxy/HTTP v0.0.0-00010101000000-000000000000 // indirect
+	golang.org/x/exp v0.0.0-20230801115018-d63ba01acd4b // indirect
+)
