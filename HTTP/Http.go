@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"strings"
 )
 
 const (
@@ -42,6 +43,20 @@ func GetHeader(con net.Conn) (string, error){
 }
 
 //Redirect the request from this proxy to the destination
-func RedirectRequest(request string) string {
-	return ""
+func RedirectRequest(request string) (string) {
+
+	var err error = CheckRequest(request)
+	if (err != nil) {
+		fmt.Println(err)
+		return ""
+	}
+
+	parts := strings.Split(request, "\n")
+	sendRequest:= GetRequest(request)
+	url,_ := GetURL(request)
+	//Change request
+	parts[0] = sendRequest
+	parts[1] = "Host: " + url
+	newRequest := strings.Join(parts, "\n")
+	return newRequest
 }

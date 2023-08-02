@@ -16,7 +16,13 @@ func HandleRequest(connection net.Conn){
 	}
 
 	fmt.Println("Received request:", header)
-
+	fmt.Println("New request")
+	result:= HTTP.RedirectRequest(header)
+	if (result == "") {
+		return
+	}
+	
+	fmt.Println("Received request:", result)
 	connection.Close()
 
 	fmt.Println("Connection closed!")
