@@ -11,12 +11,22 @@ func HandleRequest(connection net.Conn){
 
 	if (error != nil) {
 		fmt.Println("Error" + error.Error())
+		connection.Write([]byte(error.Error()))
 		connection.Close()
 		return
 	}
 
-	result:= HTTP.RedirectRequest(header)
+	error = HTTP.ValidateMethod(header)
+	if (error != nil) {
+		fmt.Println("Error: Method not allow")
+		connection.Write([]byte("Method not allow"))
+		connection.Close()
+		return
+	}
+
+	result := HTTP.RedirectRequest(header)
 	if (result == "") {
+		connection.Write([]byte("Empty Header"))
 		connection.Close()
 		return
 	}
