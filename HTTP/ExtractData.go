@@ -1,59 +1,34 @@
 package HTTP
 
 import (
-	"strings"
 	"errors"
+	"strings"
 )
 
 func GetMethod(header string) (string, error) {
-	var err error
-	temp:= strings.Split(header, "\n")
-	parts:= strings.Split(temp[0], " ")
-	if (len(parts[0]) == 0) {
-		err = errors.New("Missing method")
-		return "", err
+	request := header[ : strings.Index(header, "\r\n")]
+	parts := header[ : strings.Index(request, " /")]
+
+	if (len(parts) == 0) {
+		return "", errors.New("missing method")
 	}
-	return parts[0], nil
+
+	return parts, nil
 }
 
 func GetRequest(header string) (string) {
-	temp := strings.Split(header, "\n")	
-	value := temp[0]
+	request := header[ : strings.Index(header, "\r\n")]
 	toDelete, _ := GetURL(header)
 
-	index:= strings.Index(value, toDelete)
-	newMethod := value[:index] + value[index + len(toDelete) :]
-
-	return newMethod
+	return strings.ReplaceAll(request, toDelete, "")
 }
 
 func GetURL(header string) (string, error) {
-	var err error
-	parts := strings.Split(header, " ")
+	url := header[strings.Index(header, "/") + 1 : strings.Index(header, " HTTP")]
 
-	if (len(parts[1]) == 0) {
-		err = errors.New("Missing method")
-		return "", err
+	if (len(url) == 0) {
+		return "", errors.New("missing url")
 	}
 
-	if strings.HasPrefix(parts[1], "/") {
-		parts[1] = parts[1][1:]
-	}
-
-	return parts[1], nil
-}
-
-func CheckRequest(header string) error {
-	var err error
-	_, err = GetMethod(header)
-	if (err != nil) {
-		return err
-	}
-
-	_, err = GetURL(header)
-	if (err != nil) {
-		return err
-	}
-	
-	return nil
+	return url, nil
 }
