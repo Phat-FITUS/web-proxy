@@ -1,9 +1,10 @@
 package Server
 
 import (
+	"github.com/Phat-FITUS/web-proxy/Proxy"
 	"fmt"
-	"net"
 	"github.com/Phat-FITUS/web-proxy/HTTP"
+	"net"
 )
 
 func HandleRequest(connection net.Conn){
@@ -32,6 +33,9 @@ func HandleRequest(connection net.Conn){
 	}
 
 	fmt.Println(result)
+
+	Proxy.SendRequest()
+
 	connection.Close()
 
 	fmt.Println("Connection closed!")
