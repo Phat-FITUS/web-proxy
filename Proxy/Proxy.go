@@ -1,50 +1,45 @@
 package Proxy
 
-
 import (
-    "errors"
-    "strings"
-    "fmt"
-    "net"
+	"errors"
+	"fmt"
+	"net"
+	"strings"
 )
-const BUFFERSIZE = 1024
+const BUFFER_SIZE = 1024
+
 func GetHostName(header string) (string, error) {
     temp := strings.Split(header, "\r\n")
-    //fmt.Println(temp[1])
-
 
     parts := strings.Split(temp[1], ": ")
-   
-    if (len(parts) == 0) {
-        return "", errors.New("Missing HostName")
-    }
 
+    if (len(parts) == 0) {
+        return "", errors.New("missing HostName")
+    }
 
     return parts[1], nil
 }
 
 
-func SendRequest(header string) {
-
-
+func SendRequest(header string) (string, error) {
     hostName, _ := GetHostName(header)
-    fmt.Println(hostName)
+
     conn, err := net.Dial("tcp", hostName+":80")
     if err != nil {
         fmt.Println(err)
-        return
+        return "", errors.New(err.Error())
     }
     defer conn.Close()
-    fmt.Println("Connected to server.")
- 
+    fmt.Println("Connected to", hostName)
+
     _, err = conn.Write([]byte(header))
     if err != nil {
         fmt.Println(err)
-        return
+        return "", errors.New(err.Error())
     }
-    //
+
     var response string
-    buffer := make([]byte, BUFFERSIZE)
+    buffer := make([]byte, BUFFER_SIZE)
     for {
         bytesRead, err := conn.Read(buffer)
         if err != nil {
@@ -52,6 +47,7 @@ func SendRequest(header string) {
         }
         response += string(buffer[:bytesRead])
     }
-    //conn.Write([]byte(response))
+
     fmt.Println(response)
+    return response, nil
 }

@@ -58,6 +58,7 @@ func RedirectRequest(request string) (string) {
 	//Change hostname
 	parts[0] = sendRequest
 	parts[1] = "Host: " + url
+	parts[2] = "Connection: close"
 	newRequest := strings.Join(parts, "\r\n")
 
 	return newRequest

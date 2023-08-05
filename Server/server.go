@@ -34,7 +34,15 @@ func HandleRequest(connection net.Conn){
 
 	fmt.Println(result)
 
-	Proxy.SendRequest(result)
+	response, error := Proxy.SendRequest(result)
+
+	if (error != nil) {
+		connection.Write([]byte(error.Error()))
+		connection.Close()
+		return
+	}
+
+	connection.Write([]byte(response))
 
 	connection.Close()
 
