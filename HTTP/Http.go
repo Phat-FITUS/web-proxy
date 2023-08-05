@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
-	"strings"
+	//"strings"
 )
 
 const (
@@ -51,15 +51,23 @@ func RedirectRequest(request string) (string) {
 		return ""
 	}
 
-	parts := strings.Split(request, "\r\n")
 	sendRequest := GetRequest(request)
 	url, _ := GetURL(request)
 
 	//Change hostname
+	/*
 	parts[0] = sendRequest
 	parts[1] = "Host: " + url
 	parts[2] = "Connection: close"
 	newRequest := strings.Join(parts, "\r\n")
+*/
+	tempMap := Mapify(request)
+	
+	tempMap["Host"] = url
+	tempMap["Connection"] = "close"
 
+	newRequest :=fmt.Sprintf("%s \r\n", sendRequest)
+	newRequest += CreateDirectRequest(tempMap)
+	
 	return newRequest
 }

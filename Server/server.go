@@ -24,7 +24,7 @@ func HandleRequest(connection net.Conn){
 		connection.Close()
 		return
 	}
-
+	fmt.Println(header)
 	result := HTTP.RedirectRequest(header)
 	if (result == "") {
 		connection.Write([]byte("Empty Header"))
