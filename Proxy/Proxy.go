@@ -4,25 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strings"
+	"github.com/Phat-FITUS/web-proxy/HTTP"
 )
 const BUFFER_SIZE = 1024
 
-func GetHostName(header string) (string, error) {
-    temp := strings.Split(header, "\r\n")
-
-    parts := strings.Split(temp[1], ": ")
-
-    if (len(parts) == 0) {
-        return "", errors.New("missing HostName")
-    }
-
-    return parts[1], nil
-}
-
-
 func SendRequest(header string) (string, error) {
-    hostName, _ := GetHostName(header)
+    hostName, _ := HTTP.GetHostName(header)
 
     conn, err := net.Dial("tcp", hostName+":80")
     if err != nil {
@@ -30,7 +17,6 @@ func SendRequest(header string) (string, error) {
         return "", errors.New(err.Error())
     }
     defer conn.Close()
-    fmt.Println("Connected to", hostName)
 
     _, err = conn.Write([]byte(header))
     if err != nil {
@@ -48,6 +34,5 @@ func SendRequest(header string) (string, error) {
         response += string(buffer[:bytesRead])
     }
 
-    fmt.Println(response)
     return response, nil
 }

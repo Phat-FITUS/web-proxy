@@ -7,7 +7,7 @@ import (
 
 func GetMethod(header string) (string, error) {
 	request := header[ : strings.Index(header, "\r\n")]
-	parts := header[ : strings.Index(request, " /")]
+	parts := header[ : strings.Index(request, " ")]
 
 	if (len(parts) == 0) {
 		return "", errors.New("missing method")
@@ -18,13 +18,28 @@ func GetMethod(header string) (string, error) {
 
 func GetRequest(header string) (string) {
 	request := header[ : strings.Index(header, "\r\n")]
-	toDelete, _ := GetURL(header)
+	h, _ := GetHostName(header)
+
+	toDelete := "http://" + h
 
 	return strings.ReplaceAll(request, toDelete, "")
 }
 
+func GetHostName(header string) (string, error) {
+    temp := strings.Split(header, "\r\n")
+
+    parts := strings.Split(temp[1], ": ")
+
+    if (len(parts) == 0) {
+        return "", errors.New("missing HostName")
+    }
+
+    return parts[1], nil
+}
+
 func GetURL(header string) (string, error) {
-	url := header[strings.Index(header, "/") + 1 : strings.Index(header, " HTTP")]
+	host, _ := GetHostName(header)
+	url := strings.ReplaceAll(header[strings.Index(header, " ") + 1 : strings.Index(header, " HTTP")], host, "")
 
 	if (len(url) == 0) {
 		return "", errors.New("missing url")

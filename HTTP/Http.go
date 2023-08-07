@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"net"
-	//"strings"
 )
 
 const (
@@ -44,29 +43,20 @@ func GetHeader(con net.Conn) (string, error){
 
 //Redirect the request from this proxy to the destination
 func RedirectRequest(request string) (string) {
-
 	err := ValidateHeader(request)
+
 	if (err != nil) {
 		fmt.Println(err)
 		return ""
 	}
 
-	sendRequest := GetRequest(request)
-	url, _ := GetURL(request)
+	requestContent := GetRequest(request)
 
-	//Change hostname
-	/*
-	parts[0] = sendRequest
-	parts[1] = "Host: " + url
-	parts[2] = "Connection: close"
-	newRequest := strings.Join(parts, "\r\n")
-*/
 	tempMap := Mapify(request)
-	
-	tempMap["Host"] = url
+
 	tempMap["Connection"] = "close"
 
-	newRequest :=fmt.Sprintf("%s \r\n", sendRequest)
+	newRequest := fmt.Sprintf("%s \r\n", requestContent)
 	newRequest += CreateDirectRequest(tempMap)
 	
 	return newRequest
