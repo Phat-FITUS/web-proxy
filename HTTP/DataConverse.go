@@ -5,14 +5,14 @@ import (
 	"strings"
 )
 
-func Mapify(input string) (map[string]string) {
-	temp := input[:strings.Index(input, "\r\n")]
+func Mapify(input string, separate string) (map[string]string) {
+	temp := input[:strings.Index(input, separate)]
 	input = input[:0] + input[len(temp):]
 	result := make(map[string]string)
 
 
 	// Divide input into part key-value
-	pairs := strings.Split(input, "\r\n")
+	pairs := strings.Split(input, separate)
 	for i:=0; i < len(pairs); i++ {
 		pair:= pairs[i]
 		parts := strings.SplitN(pair, ":", 2)

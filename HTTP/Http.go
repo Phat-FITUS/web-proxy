@@ -52,7 +52,7 @@ func RedirectRequest(request string) (string) {
 
 	requestContent := GetRequest(request)
 
-	tempMap := Mapify(request)
+	tempMap := Mapify(request, "\r\n")
 
 	tempMap["Connection"] = "close"
 
