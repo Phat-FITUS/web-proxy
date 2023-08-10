@@ -1,9 +1,10 @@
 package HTTP
 
 import (
-	"bytes"
 	"fmt"
 	"net"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -14,10 +15,12 @@ const (
 //End of a header of HTTP Request
 var EndMark = [4]byte{CR, LF, CR, LF}
 
+const BUFFER_SIZE = 1024
+
 //Get header of request
 func GetHeader(con net.Conn) (string, error){
 	header := ""
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, BUFFER_SIZE)
 
 	for {
 		n, err := con.Read(buffer)
@@ -33,12 +36,42 @@ func GetHeader(con net.Conn) (string, error){
 
 		header += string(buffer[:n])
 
-		if (bytes.Equal(buffer[n - 4 : n], EndMark[:])){
+		if (strings.Contains(header, "\r\n\r\n")){
 			break
 		}
 	}
 
 	return header, nil
+}
+
+func GetBody(con net.Conn, header string, prevOverflow string) string {
+	h := Mapify(header, "\r\n")
+	length, isExist := h["Content-Length"]
+	body := prevOverflow
+
+	if (isExist) {
+		length, _ := strconv.Atoi(length)
+		currentByte := len(body)
+
+		for currentByte < length {
+			buffer := make([]byte, BUFFER_SIZE)			
+			n, err := con.Read(buffer)
+
+			if err != nil {
+				if err.Error() == "EOF" {
+					break
+				}
+
+				fmt.Println("Error reading response:", err)
+				return ""
+			}
+
+			body += string(buffer[:n])
+			currentByte += BUFFER_SIZE
+		}
+	}
+
+	return body
 }
 
 //Redirect the request from this proxy to the destination

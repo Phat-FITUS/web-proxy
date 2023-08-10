@@ -2,7 +2,7 @@ package HTTP
 
 import (
 	"errors"
-
+	"strings"
 	"golang.org/x/exp/slices"
 )
 
@@ -31,4 +31,13 @@ func ValidateMethod(header string) error {
 	}
 
 	return nil
+}
+
+func IsMediaFetching(header string) bool {
+	h := Mapify(header, "\r\n")
+	acc, exist := h["Accept"]
+	if (exist) {
+		return !strings.Contains(acc, "text")
+	}
+	return false
 }
