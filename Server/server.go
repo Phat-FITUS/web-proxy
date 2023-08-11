@@ -1,40 +1,97 @@
 package Server
 
 import (
-	"github.com/Phat-FITUS/web-proxy/Proxy"
 	"fmt"
-	"github.com/Phat-FITUS/web-proxy/HTTP"
 	"net"
+	"os"
+	"strings"
+	"time"
+	"github.com/Phat-FITUS/web-proxy/HTTP"
+	"github.com/Phat-FITUS/web-proxy/Proxy"
 )
 
 func HandleRequest(connection net.Conn){
+	if (!IsInService()) {
+		content, _ := os.ReadFile("./Server/status/exceed.html")
+		connection.Write([]byte(fmt.Sprintf("HTTP/1.1 403 Forbidden\r\nContent-type: text/html\r\nContent-length: %d\r\n\r\n%s", len(string(content)), string(content))))
+		connection.Close()
+		return
+	}
+
 	header, error := HTTP.GetHeader(connection)
+	endHeaderPos := strings.Index(header, "\r\n\r\n")
+	body := ""
+	if (endHeaderPos != -1 && endHeaderPos + 4 < len(header)) {
+		body = HTTP.GetBody(connection, header, header[endHeaderPos + 4:])
+		header = header[:endHeaderPos + 4]
+	}
+	fmt.Printf("%s%s\n", header, body)
 
 	if (error != nil) {
-		fmt.Println("Error" + error.Error())
-		connection.Write([]byte(error.Error()))
+		content, _ := os.ReadFile("./Server/status/403.html")
+		connection.Write([]byte(fmt.Sprintf("HTTP/1.1 403 Forbidden\r\nContent-type: text/html\r\nContent-length: %d\r\n\r\n%s", len(string(content)), string(content))))
 		connection.Close()
 		return
 	}
 
 	error = HTTP.ValidateMethod(header)
 	if (error != nil) {
-		fmt.Println("Error: Method not allow")
-		connection.Write([]byte("Method not allow"))
+		content, _ := os.ReadFile("./Server/status/403.html")
+		connection.Write([]byte(fmt.Sprintf("HTTP/1.1 403 Forbidden\r\nContent-type: text/html\r\nContent-length: %d\r\n\r\n%s", len(string(content)), string(content))))
 		connection.Close()
 		return
 	}
 
-	result := HTTP.RedirectRequest(header)
-	if (result == "") {
-		connection.Write([]byte("Empty Header"))
+	host, _ := HTTP.GetHostName(header)
+	if (!IsAcceptableHost(host)) {
+		content, _ := os.ReadFile("./Server/status/403.html")
+		connection.Write([]byte(fmt.Sprintf("HTTP/1.1 403 Forbidden\r\nContent-type: text/html\r\nContent-length: %d\r\n\r\n%s", len(string(content)), string(content))))
 		connection.Close()
 		return
 	}
 
-	fmt.Println(result)
+	url := header[strings.Index(header, " ") + 1 : strings.Index(header, " HTTP")]
+	url = strings.ReplaceAll(url, "http://", "")
 
-	Proxy.SendRequest()
+	file := url[strings.LastIndex(url, "/"):]
+	requestedFile := "./cache/" + url
+
+	if (HTTP.IsMediaFetching(header)) {
+		data, error := os.ReadFile(requestedFile)
+		fileInfo, _ := os.Stat(requestedFile)
+
+		if (error == nil && time.Since(fileInfo.ModTime()).Seconds() <= 300) {
+			connection.Write([]byte(string(data)))
+			connection.Close()
+			fmt.Println("Cache Returning")
+			return
+		}
+	}
+
+	redirectedHeader := HTTP.RedirectRequest(header)
+	if (redirectedHeader == "") {
+		content, _ := os.ReadFile("./Server/status/403.html")
+		connection.Write([]byte(fmt.Sprintf("HTTP/1.1 403 Forbidden\r\nContent-type: text/html\r\nContent-length: %d\r\n\r\n%s", len(string(content)), string(content))))
+		connection.Close()
+		return
+	}
+
+	response, error := Proxy.SendRequest(redirectedHeader + body)
+
+	if (error != nil) {
+		content, _ := os.ReadFile("./Server/status/404.html")
+		connection.Write([]byte(fmt.Sprintf("HTTP/1.1 404 Not Found!\r\nContent-type: text/html\r\nContent-length: %d\r\n\r\n%s", len(string(content)), string(content))))
+		connection.Close()
+		return
+	}
+
+	if (HTTP.IsMediaFetching(header)) {
+		pathToFile :=  strings.TrimSuffix(requestedFile, file)
+		os.MkdirAll(pathToFile, os.ModePerm)
+		os.WriteFile(requestedFile, []byte(response), 0644)
+	}
+
+	connection.Write([]byte(response))
 
 	connection.Close()
 
