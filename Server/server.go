@@ -18,14 +18,7 @@ func HandleRequest(connection net.Conn){
 		return
 	}
 
-	header, error := HTTP.GetHeader(connection)
-	endHeaderPos := strings.Index(header, "\r\n\r\n")
-	body := ""
-	if (endHeaderPos != -1 && endHeaderPos + 4 < len(header)) {
-		body = HTTP.GetBody(connection, header, header[endHeaderPos + 4:])
-		header = header[:endHeaderPos + 4]
-	}
-	fmt.Printf("%s%s\n", header, body)
+	header, body, error := HTTP.GetResponse(connection)
 
 	if (error != nil) {
 		content, _ := os.ReadFile("./Server/status/403.html")

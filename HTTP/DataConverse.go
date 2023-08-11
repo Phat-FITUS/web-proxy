@@ -21,8 +21,7 @@ func Mapify(input string, separate string) (map[string]string) {
 			key := strings.TrimSpace(parts[0])
 			value := strings.TrimSpace(parts[1])
 			result[key] = value
-		} 
-		
+		}
 	}
 	return result
 }

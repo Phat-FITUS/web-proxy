@@ -24,15 +24,7 @@ func SendRequest(header string) (string, error) {
         return "", errors.New(err.Error())
     }
 
-    var response string
-    buffer := make([]byte, BUFFER_SIZE)
-    for {
-        bytesRead, err := conn.Read(buffer)
-        if err != nil {
-            break
-        }
-        response += string(buffer[:bytesRead])
-    }
+    header, body, err := HTTP.GetResponse(conn)
 
-    return response, nil
+    return header + body, err
 }

@@ -53,8 +53,8 @@ func GetBody(con net.Conn, header string, prevOverflow string) string {
 		length, _ := strconv.Atoi(length)
 		currentByte := len(body)
 
-		for currentByte < length {
-			buffer := make([]byte, BUFFER_SIZE)			
+		for currentByte <= length {
+			buffer := make([]byte, BUFFER_SIZE)
 			n, err := con.Read(buffer)
 
 			if err != nil {
@@ -67,11 +67,24 @@ func GetBody(con net.Conn, header string, prevOverflow string) string {
 			}
 
 			body += string(buffer[:n])
-			currentByte += BUFFER_SIZE
+			currentByte += n
 		}
 	}
 
 	return body
+}
+
+func GetResponse(connection net.Conn) (string, string, error) {
+	header, error := GetHeader(connection)
+	endHeaderPos := strings.Index(header, "\r\n\r\n")
+
+	body := ""
+	if (endHeaderPos != -1 && endHeaderPos + 4 < len(header)) {
+		body = GetBody(connection, header, header[endHeaderPos + 4:])
+		header = header[:endHeaderPos + 4]
+	}
+
+	return header, body, error
 }
 
 //Redirect the request from this proxy to the destination
@@ -91,6 +104,6 @@ func RedirectRequest(request string) (string) {
 
 	newRequest := fmt.Sprintf("%s \r\n", requestContent)
 	newRequest += CreateDirectRequest(tempMap)
-	
+
 	return newRequest
 }
