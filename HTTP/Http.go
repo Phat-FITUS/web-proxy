@@ -47,13 +47,13 @@ func GetHeader(con net.Conn) (string, error){
 func GetBody(con net.Conn, header string, prevOverflow string) string {
 	h := Mapify(header, "\r\n")
 	length, isExist := h["Content-Length"]
+	_, isTransfer := h["Transfer-Encoding"]
 	body := prevOverflow
 
-	if (isExist) {
+	if (isExist || !isTransfer) {
 		length, _ := strconv.Atoi(length)
-		currentByte := len(body)
 
-		for currentByte <= length {
+		for len(body) < length {
 			buffer := make([]byte, BUFFER_SIZE)
 			n, err := con.Read(buffer)
 
@@ -67,7 +67,22 @@ func GetBody(con net.Conn, header string, prevOverflow string) string {
 			}
 
 			body += string(buffer[:n])
-			currentByte += n
+		}
+	} else {
+		for !strings.Contains(body, "0\r\n\r\n"){
+			buffer := make([]byte, BUFFER_SIZE)
+			n, err := con.Read(buffer)
+
+			if err != nil {
+				if err.Error() == "EOF" {
+					break
+				}
+
+				fmt.Println("Error reading response:", err)
+				return ""
+			}
+
+			body += string(buffer[:n])
 		}
 	}
 
@@ -82,6 +97,8 @@ func GetResponse(connection net.Conn) (string, string, error) {
 	if (endHeaderPos != -1 && endHeaderPos + 4 < len(header)) {
 		body = GetBody(connection, header, header[endHeaderPos + 4:])
 		header = header[:endHeaderPos + 4]
+	}else {
+		body = GetBody(connection, header, "")
 	}
 
 	return header, body, error
@@ -100,7 +117,7 @@ func RedirectRequest(request string) (string) {
 
 	tempMap := Mapify(request, "\r\n")
 
-	tempMap["Connection"] = "close"
+	tempMap["Connection"] = "keep-alive"
 
 	newRequest := fmt.Sprintf("%s \r\n", requestContent)
 	newRequest += CreateDirectRequest(tempMap)
