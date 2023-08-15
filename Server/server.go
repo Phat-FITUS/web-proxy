@@ -53,7 +53,7 @@ func HandleRequest(connection net.Conn){
 		data, error := os.ReadFile(requestedFile)
 		fileInfo, _ := os.Stat(requestedFile)
 
-		if (error == nil && time.Since(fileInfo.ModTime()).Seconds() <= 300) {
+		if (error == nil && time.Since(fileInfo.ModTime()).Seconds() <= GetConfigTime()) {
 			connection.Write([]byte(string(data)))
 			connection.Close()
 			fmt.Println("Cache Returning")
@@ -84,6 +84,7 @@ func HandleRequest(connection net.Conn){
 		os.WriteFile(requestedFile, []byte(response), 0644)
 	}
 
+	fmt.Println("Response returned")
 	connection.Write([]byte(response))
 
 	connection.Close()

@@ -40,7 +40,7 @@ func IsInService() bool {
 }
 
 func IsAcceptableHost(host string) bool{
-	temp := HTTP.Mapify(readConfig("./Server/proxy.config"), "\n") 
+	temp := HTTP.Mapify(readConfig("./Server/proxy.config"), "\n")
 	_, exist := temp["whitelisting"]
 	if exist {
 		whiteList := strings.Split(temp["whitelisting"], ",")
@@ -52,4 +52,19 @@ func IsAcceptableHost(host string) bool{
 		return false
 	}
 	return true
+}
+
+const DefaultCache = 300
+
+func GetConfigTime() float64{
+	temp := HTTP.Mapify(readConfig("./Server/proxy.config"), "\n")
+	cache, exist := temp["cache"]
+	if exist {
+		cacheTime, err := strconv.ParseFloat(cache, 64)
+		if (err != nil) {
+			return DefaultCache
+		}
+		return cacheTime
+	}
+	return DefaultCache
 }
