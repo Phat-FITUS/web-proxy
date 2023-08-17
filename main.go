@@ -27,7 +27,7 @@ func main() {
             os.Exit(1)
         }
 
-        fmt.Println("connected")
+        fmt.Println("New Connection")
 
         go Server.HandleRequest(connection)
     }

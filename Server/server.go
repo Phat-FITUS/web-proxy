@@ -68,6 +68,7 @@ func HandleRequest(connection net.Conn){
 		connection.Close()
 		return
 	}
+	fmt.Printf("Received:\n%s", redirectedHeader + body)
 
 	response, error := Proxy.SendRequest(redirectedHeader + body)
 
